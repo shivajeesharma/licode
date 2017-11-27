@@ -71,7 +71,7 @@ exports.ErizoJSController = function (threadPool, ioThreadPool) {
             monitorMinVideoBw(wrtc, callback, idPub, idSub, options, that);
         }
 
-        if (GLOBAL.config.erizoController.report.rtcp_stats) {  // jshint ignore:line
+        if (global.config.erizoController.report.rtcp_stats) {  // jshint ignore:line
             log.debug('message: RTCP Stat collection is active');
             wrtc.getPeriodicStats(function (newStats) {
                 var timeStamp = new Date();
@@ -86,7 +86,7 @@ exports.ErizoJSController = function (threadPool, ioThreadPool) {
             log.info('message: WebRtcConnection status update, ' +
                      'id: ' + wrtc.wrtcId + ', status: ' + newStatus +
                       ', ' + logger.objectToLog(options.metadata));
-            if (GLOBAL.config.erizoController.report.connection_events) {  //jshint ignore:line
+            if (global.config.erizoController.report.connection_events) {  //jshint ignore:line
                 var timeStamp = new Date();
                 amqper.broadcast('event', {pub: idPub,
                                            subs: idSub,
@@ -209,8 +209,8 @@ exports.ErizoJSController = function (threadPool, ioThreadPool) {
         }
     };
 
-    that.addExternalOutput = function (to, url) {
-        if (publishers[to]) publishers[to].addExternalOutput(url);
+    that.addExternalOutput = function (to, url, options) {
+        if (publishers[to]) publishers[to].addExternalOutput(url, options);
     };
 
     that.removeExternalOutput = function (to, url) {
@@ -235,7 +235,7 @@ exports.ErizoJSController = function (threadPool, ioThreadPool) {
     };
 
     var disableDefaultHandlers = function(wrtc) {
-      var disabledHandlers = GLOBAL.config.erizo.disabledHandlers;
+      var disabledHandlers = global.config.erizo.disabledHandlers;
       for (var index in disabledHandlers) {
         wrtc.disableHandler(disabledHandlers[index]);
       }
@@ -267,6 +267,9 @@ exports.ErizoJSController = function (threadPool, ioThreadPool) {
                         }
                         if (msg.config.qualityLayer !== undefined) {
                             that.setQualityLayer (msg.config.qualityLayer, peerId, streamId);
+                        }
+                        if (msg.config.video !== undefined) {
+                            that.setVideoConstraints(msg.config.video, peerId, streamId);
                         }
                     }
                 } else if (msg.type === 'control') {
@@ -533,6 +536,13 @@ exports.ErizoJSController = function (threadPool, ioThreadPool) {
       }
     };
 
+    that.setVideoConstraints = function (video, from, to) {
+      var publisher = this.publishers[to];
+      if (publisher.hasSubscriber(from)) {
+        publisher.setVideoConstraints(from, video.width, video.height, video.frameRate);
+      }
+    };
+
     const getWrtcStats = (label, stats, wrtc) => {
       const promise = new Promise((resolve) => {
         wrtc.getStats((statsString) => {
@@ -570,20 +580,20 @@ exports.ErizoJSController = function (threadPool, ioThreadPool) {
         if (to && publishers[to]) {
             publisher = publishers[to];
 
-            if (GLOBAL.config.erizoController.reportSubscriptions &&
-                GLOBAL.config.erizoController.reportSubscriptions.maxSubscriptions > 0) {
+            if (global.config.erizoController.reportSubscriptions &&
+                global.config.erizoController.reportSubscriptions.maxSubscriptions > 0) {
 
-                if (timeout > GLOBAL.config.erizoController.reportSubscriptions.maxTimeout)
-                    timeout = GLOBAL.config.erizoController.reportSubscriptions.maxTimeout;
-                if (interval < GLOBAL.config.erizoController.reportSubscriptions.minInterval)
-                    interval = GLOBAL.config.erizoController.reportSubscriptions.minInterval;
+                if (timeout > global.config.erizoController.reportSubscriptions.maxTimeout)
+                    timeout = global.config.erizoController.reportSubscriptions.maxTimeout;
+                if (interval < global.config.erizoController.reportSubscriptions.minInterval)
+                    interval = global.config.erizoController.reportSubscriptions.minInterval;
 
                 if (statsSubscriptions[to]) {
                     log.debug('message: Renewing subscription to stream: ' + to);
                     clearTimeout(statsSubscriptions[to].timeout);
                     clearInterval(statsSubscriptions[to].interval);
                 } else if (Object.keys(statsSubscriptions).length <
-                    GLOBAL.config.erizoController.reportSubscriptions.maxSubscriptions){
+                    global.config.erizoController.reportSubscriptions.maxSubscriptions){
                     statsSubscriptions[to] = {};
                 }
 

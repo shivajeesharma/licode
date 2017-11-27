@@ -21,7 +21,7 @@ describe('Erizo JS Controller', function() {
 
 
   beforeEach(function() {
-    GLOBAL.config = {logger: {configFile: true}};
+    global.config = {logger: {configFile: true}};
     licodeConfigMock = mocks.start(mocks.licodeConfig);
     amqperMock = mocks.start(mocks.amqper);
     erizoApiMock = mocks.start(mocks.erizoAPI);
@@ -34,7 +34,7 @@ describe('Erizo JS Controller', function() {
     mocks.stop(licodeConfigMock);
     mocks.deleteRequireCache();
     mocks.reset();
-    GLOBAL.config = {};
+    global.config = {};
   });
 
   it('should provide the known API', function() {
@@ -94,6 +94,7 @@ describe('Erizo JS Controller', function() {
 
   describe('Add External Output', function() {
     var kArbitraryEoUrl = 'eo_url1';
+    var kArbitraryEoOptions = {};
     var kArbitraryEiId = 'ei_id1';
     var kArbitraryEiUrl = 'ei_url1';
 
@@ -103,7 +104,7 @@ describe('Erizo JS Controller', function() {
     });
 
     it('should succeed creating ExternalOutput', function() {
-      controller.addExternalOutput(kArbitraryEiId, kArbitraryEoUrl);
+      controller.addExternalOutput(kArbitraryEiId, kArbitraryEoUrl, kArbitraryEoOptions);
       expect(erizoApiMock.ExternalOutput.args[0][0]).to.equal(kArbitraryEoUrl);
       expect(erizoApiMock.ExternalOutput.callCount).to.equal(1);
       expect(mocks.ExternalOutput.wrtcId).to.equal(kArbitraryEoUrl + '_' + kArbitraryEiId);
@@ -112,7 +113,7 @@ describe('Erizo JS Controller', function() {
     });
 
     it('should fail if Publisher does not exist', function() {
-      controller.addExternalOutput(kArbitraryEiId + 'a', kArbitraryEiUrl);
+      controller.addExternalOutput(kArbitraryEiId + 'a', kArbitraryEiUrl, kArbitraryEoOptions);
 
       expect(erizoApiMock.ExternalOutput.callCount).to.equal(0);
     });
@@ -120,7 +121,7 @@ describe('Erizo JS Controller', function() {
     describe('Remove External Output', function() {
 
       beforeEach(function() {
-        controller.addExternalOutput(kArbitraryEiId, kArbitraryEoUrl);
+        controller.addExternalOutput(kArbitraryEiId, kArbitraryEoUrl, kArbitraryEoOptions);
       });
 
       it('should succeed removing ExternalOutput', function() {
@@ -146,8 +147,8 @@ describe('Erizo JS Controller', function() {
 
     beforeEach(function() {
       callback = sinon.stub();
-      GLOBAL.config.erizo = {};
-      GLOBAL.config.erizoController = {report: {
+      global.config.erizo = {};
+      global.config.erizoController = {report: {
         'connection_events': true,
         'rtcp_stats': true}};
     });
